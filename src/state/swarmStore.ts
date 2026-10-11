@@ -161,18 +161,25 @@ export class SwarmStore {
     this.showToast(`Fixture selection recorded for "${optionId}". No agent consensus was dispatched.`);
   }
 
-  public approveGate(gateId: string) {
-    let approvedGate: ApprovalGateCard | undefined;
-    const updatedCards = this.state.cards.map(card => {
-      if (card.id === gateId && card.type === 'approval-gate') {
-        approvedGate = card as ApprovalGateCard;
-        return { ...card, status: 'approved' as const };
-      }
-      return card;
+  private resolvePendingGate(
+    gateId: string,
+    status: Exclude<ApprovalGateCard['status'], 'pending'>,
+  ): ApprovalGateCard | undefined {
+    const gate = this.state.cards.find(
+      (card): card is ApprovalGateCard => card.id === gateId && card.type === 'approval-gate',
+    );
+    // The fixture UI offers decisions only while pending. Stale callbacks must
+    // not overwrite a resolved choice or append another scenario record.
+    if (!gate || gate.status !== 'pending') return undefined;
+
+    this.setState({
+      cards: this.state.cards.map(card => card === gate ? { ...gate, status } : card),
     });
+    return gate;
+  }
 
-    this.setState({ cards: updatedCards });
-
+  public approveGate(gateId: string) {
+    const approvedGate = this.resolvePendingGate(gateId, 'approved');
     if (approvedGate) {
       this.recordScenarioEvent({
         agentId: approvedGate.agentId,
@@ -189,17 +196,7 @@ export class SwarmStore {
   }
 
   public rejectGate(gateId: string) {
-    let rejectedGate: ApprovalGateCard | undefined;
-    const updatedCards = this.state.cards.map(card => {
-      if (card.id === gateId && card.type === 'approval-gate') {
-        rejectedGate = card as ApprovalGateCard;
-        return { ...card, status: 'rejected' as const };
-      }
-      return card;
-    });
-
-    this.setState({ cards: updatedCards });
-
+    const rejectedGate = this.resolvePendingGate(gateId, 'rejected');
     if (rejectedGate) {
       // Isolate the offending worker immediately: it stops advancing while
       // unrelated workers continue. fencingGen is intentionally untouched —
@@ -227,15 +224,10 @@ export class SwarmStore {
   }
 
   public sandboxGate(gateId: string) {
-    const updatedCards = this.state.cards.map(card => {
-      if (card.id === gateId && card.type === 'approval-gate') {
-        return { ...card, status: 'sandboxed' as const };
-      }
-      return card;
-    });
-
-    this.setState({ cards: updatedCards });
-    this.showToast(`Scenario ${gateId} marked for sandbox review. No sandbox was created.`);
+    const sandboxedGate = this.resolvePendingGate(gateId, 'sandboxed');
+    if (sandboxedGate) {
+      this.showToast(`Scenario ${gateId} marked for sandbox review. No sandbox was created.`);
+    }
   }
 
   public updateParameter(cardId: string, value: number) {
