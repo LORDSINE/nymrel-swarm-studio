@@ -41,6 +41,50 @@ describe('browser-only store transitions', () => {
     expect(store.getState().workspaceFiles.some(item => item.path === file!.path)).toBe(false);
   });
 
+  it.each([
+    ['approveGate', 'approved', 1],
+    ['rejectGate', 'rejected', 1],
+    ['sandboxGate', 'sandboxed', 0],
+  ] as const)('keeps the first %s decision until the fixture is reset', (method, status, addedLogs) => {
+    const store = new SwarmStore();
+    const gate = store.getState().cards.find(card => card.type === 'approval-gate')!;
+    const initialLogs = store.getState().scenarioLogs.length;
+
+    store[method](gate.id);
+    const resolvedState = store.getState();
+    expect(resolvedState.cards.find(card => card.id === gate.id)).toMatchObject({ status });
+    expect(resolvedState.scenarioLogs).toHaveLength(initialLogs + addedLogs);
+
+    const listener = vi.fn();
+    const unsubscribe = store.subscribe(listener);
+    for (const repeat of ['approveGate', 'rejectGate', 'sandboxGate'] as const) {
+      store[repeat](gate.id);
+      expect(store.getState()).toBe(resolvedState);
+    }
+    expect(listener).not.toHaveBeenCalled();
+
+    store.resetDemo();
+    store[method](gate.id);
+    expect(store.getState().cards.find(card => card.id === gate.id)).toMatchObject({ status });
+    expect(store.getState().scenarioLogs).toHaveLength(initialLogs + addedLogs);
+    unsubscribe();
+  });
+
+  it.each(['approveGate', 'rejectGate', 'sandboxGate'] as const)(
+    'ignores missing or non-gate cards in %s without reporting a decision',
+    method => {
+      const store = new SwarmStore();
+      const initialState = store.getState();
+      const ballot = initialState.cards.find(card => card.type === 'decision-ballot')!;
+
+      store[method]('missing-gate');
+      expect(store.getState()).toBe(initialState);
+      store[method](ballot.id);
+      expect(store.getState()).toBe(initialState);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
   it('records hashes that can be independently recomputed', () => {
     const store = new SwarmStore();
     const priorLeaves = [...store.getState().scenarioLogs]
