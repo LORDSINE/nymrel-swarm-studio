@@ -22,7 +22,7 @@ import {
 } from '../mock/simulationEngine';
 import { computeSha256, computeMerkleRoot } from '../mock/merkle';
 
-export type ActiveTab = 'deck' | 'topology' | 'workspace' | 'security';
+export type ActiveTab = 'deck' | 'topology' | 'workspace' | 'security' | 'income-registry';
 export type LogFilter = 'ALL' | 'ALLOW' | 'BLOCK' | 'HASHES';
 
 export interface SwarmStoreState {

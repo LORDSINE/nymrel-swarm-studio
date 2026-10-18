@@ -8,11 +8,13 @@ import { ScenarioIntegrityLog } from './components/ScenarioIntegrityLog';
 import { TokenEfficiencyRadar } from './components/TokenEfficiencyRadar';
 import { WorkspaceInspector } from './components/WorkspaceInspector';
 import { TopologyView } from './components/TopologyView';
+import { IncomeRegistryView } from './components/IncomeRegistryView';
 import { 
   LayoutDashboard, 
   Network, 
   FolderGit2, 
-  ShieldCheck, 
+  ShieldCheck,
+  Briefcase,
   CheckCircle2,
   Info,
 } from 'lucide-react';
@@ -25,6 +27,7 @@ export const App: React.FC = () => {
     { id: 'topology', label: 'Example Topology', icon: <Network size={15} aria-hidden="true" /> },
     { id: 'workspace', label: 'Workspace Fixture', icon: <FolderGit2 size={15} aria-hidden="true" /> },
     { id: 'security', label: 'Integrity Log', icon: <ShieldCheck size={15} aria-hidden="true" /> },
+    { id: 'income-registry', label: 'Income Registry', icon: <Briefcase size={15} aria-hidden="true" /> },
   ];
 
   return (
@@ -106,6 +109,13 @@ export const App: React.FC = () => {
               <SwarmRoster />
               <TokenEfficiencyRadar />
             </div>
+          </div>
+        )}
+
+        {/* View 5: income opportunity registry (static, illustrative reference) */}
+        {state.activeTab === 'income-registry' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <IncomeRegistryView />
           </div>
         )}
       </main>

@@ -191,3 +191,28 @@ export interface SwarmTopologyLink {
   protocol: 'gRPC' | 'SSE' | 'SharedMemory' | 'HTTP2';
   messagesPerSecond: number;
 }
+
+export type RevenueClass = 'Cash now' | 'Recurring' | 'Recurring / marketplace' | 'Recurring / API';
+
+export interface IncomeScoreDimensions {
+  demand: number; // 1-5: current market/customer evidence
+  timeToFirstDollar: number; // 1-5: time to first dollar (5 = shortest)
+  recurring: number; // 1-5: quality of recurring/usage revenue
+  reuse: number; // 1-5: existing Nymrel code/data/proof reused
+  distribution: number; // 1-5: existing channel/audience/marketplace access
+  margin: number; // 1-5: expected digital gross margin
+  fulfillment: number; // 1-5: operational burden (5 = low burden)
+  proof: number; // 1-5: credible demos, production evidence, case studies, customers
+}
+
+export interface IncomeLaneEntry {
+  id: string;
+  asset: string;
+  incomeLanes: string[];
+  commercialState: string;
+  primaryBlocker: string;
+  nextRevenueAction: string;
+  class: RevenueClass;
+  /** Illustrative scoring example only — not verified revenue or customer evidence. */
+  illustrativeScore?: IncomeScoreDimensions;
+}
